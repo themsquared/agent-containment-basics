@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+#
+# The whole containment story in one file. Three CSO-named failures, three
+# controls, one route:
+#
+#   1. Default-deny egress  -- there is exactly one route (`/package`).
+#      Anything else (`/exfil`, or any other path) matches nothing and the
+#      gateway has no backend to send it to. No allowlist of bad destinations
+#      to maintain -- the absence of a route IS the deny.
+#   2. No ambient credentials -- the agent container never holds
+#      `registry-secret-9f2`. The gateway injects it into the one route
+#      that's allowed to use it. A pivoted request never carries it, because
+#      it never reaches a route that injects anything.
+#   3. Egress audit log -- every request that reaches this listener is
+#      logged, matched or not, so an attempted pivot shows up even though it
+#      was blocked.
+frontendPolicies:
+  accessLog:
+    add:
+      path: request.path
+      status: "string(response.code)"
+binds:
+- port: 8080
+  listeners:
+  - protocol: HTTP
+    routes:
+    - name: registry-lookup
+      matches:
+      - path:
+          pathPrefix: /package
+      policies:
+        transformations:
+          request:
+            add:
+              x-api-key: "'registry-secret-9f2'"
+      backends:
+      - host: registry-api:8091

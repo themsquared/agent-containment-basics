@@ -1,0 +1,20 @@
+services:
+  registry-api:
+    build: { context: ./mock-services, dockerfile: Dockerfile.registry }
+    networks: [flat]
+
+  attacker-target:
+    build: { context: ./mock-services, dockerfile: Dockerfile.attacker }
+    networks: [flat]
+
+  agent:
+    build: { context: ./agent }
+    depends_on: [registry-api, attacker-target]
+    networks: [flat]
+    environment:
+      LEGIT_URL: http://registry-api:8091/package
+      PIVOT_URL: http://attacker-target:8092/exfil
+      API_KEY: registry-secret-9f2
+
+networks:
+  flat: {}

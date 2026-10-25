@@ -1,0 +1,31 @@
+services:
+  registry-api:
+    build: { context: ./mock-services, dockerfile: Dockerfile.registry }
+    networks: [egress]
+
+  attacker-target:
+    build: { context: ./mock-services, dockerfile: Dockerfile.attacker }
+    networks: [egress]
+
+  agentgateway:
+    image: cr.agentgateway.dev/agentgateway:v1.6.0
+    command: ["-f", "/config/config.yaml"]
+    volumes:
+      - ./config/config.yaml:/config/config.yaml:ro
+    depends_on: [registry-api, attacker-target]
+    networks: [sandbox, egress]
+
+  agent:
+    build: { context: ./agent }
+    depends_on: [agentgateway]
+    networks: [sandbox]  # no membership in `egress` at all -- cannot resolve
+                          # registry-api or attacker-target by name or address
+    environment:
+      LEGIT_URL: http://agentgateway:8080/package
+      PIVOT_URL: http://agentgateway:8080/exfil
+      # no API_KEY: this container never holds the credential
+
+networks:
+  sandbox:
+    internal: true   # no route to the outside world at all, gateway included
+  egress: {}
