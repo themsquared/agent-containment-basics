@@ -1,5 +1,7 @@
 # agent-containment-basics
 
+> 📖 **Read the write-up:** [AI Agent Containment: Why a Sandbox Alone Isn't Enough](https://webofmike.com/agent-containment-basics/)
+
 **"Your sheep haven't escaped, you just built too low a fence."**
 
 A [CSO Online piece](https://www.csoonline.com/) that hit 948 points and 620 comments on
